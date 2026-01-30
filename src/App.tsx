@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { SceneCanvas } from './components/SceneCanvas';
 import { LeftPanel } from './components/LeftPanel';
 import { RightPanel } from './components/RightPanel';
@@ -9,6 +9,7 @@ import { telemetryService } from './services/telemetryService';
 export default function App() {
   const setHeroBus = useOperatorStore((state) => state.setHeroBus);
   const loadStuckScenario = useOperatorStore((state) => state.loadStuckScenario);
+  const [isMeasureTooltipVisible, setIsMeasureTooltipVisible] = useState(false);
 
   // Initialize telemetry service and load demo scenario on mount
   useEffect(() => {
@@ -53,6 +54,35 @@ export default function App() {
     };
   }, [setHeroBus, loadStuckScenario]);
 
+  useEffect(() => {
+    const isMKey = (event: KeyboardEvent) =>
+      event.code === 'KeyM' || event.key.toLowerCase() === 'm';
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isMKey(event)) return;
+      setIsMeasureTooltipVisible(true);
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (!isMKey(event)) return;
+      setIsMeasureTooltipVisible(false);
+    };
+
+    const handleWindowBlur = () => {
+      setIsMeasureTooltipVisible(false);
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleWindowBlur);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleWindowBlur);
+    };
+  }, []);
+
   return (
     <div className="w-screen h-screen bg-[#0a0a0a] flex flex-col overflow-hidden">
       <Header />
@@ -62,6 +92,11 @@ export default function App() {
         
         <div className="flex-1 relative">
           <SceneCanvas />
+          {isMeasureTooltipVisible && (
+            <div className="pointer-events-none absolute left-1/2 top-4 z-20 -translate-x-1/2 rounded-md bg-gray-900/90 px-3 py-2 text-xs text-gray-100 shadow-lg ring-1 ring-white/10">
+              Hold <span className="font-semibold">M</span> to view measurement tips
+            </div>
+          )}
         </div>
         
         <RightPanel />
