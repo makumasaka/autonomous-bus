@@ -87,16 +87,17 @@ export default function App() {
     <div className="w-screen h-screen bg-[#0a0a0a] flex flex-col overflow-hidden">
       <Header />
       
+      {isMeasureTooltipVisible && (
+        <div className="pointer-events-none fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-md bg-gray-900/90 px-3 py-2 text-xs text-gray-100 shadow-lg ring-1 ring-white/10">
+          Hold <span className="font-semibold">M</span> to view measurement tips
+        </div>
+      )}
+
       <div className="flex-1 flex relative overflow-hidden">
         <LeftPanel />
         
         <div className="flex-1 relative">
           <SceneCanvas />
-          {isMeasureTooltipVisible && (
-            <div className="pointer-events-none absolute left-1/2 top-4 z-20 -translate-x-1/2 rounded-md bg-gray-900/90 px-3 py-2 text-xs text-gray-100 shadow-lg ring-1 ring-white/10">
-              Hold <span className="font-semibold">M</span> to view measurement tips
-            </div>
-          )}
         </div>
         
         <RightPanel />
