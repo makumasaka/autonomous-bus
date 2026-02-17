@@ -5,8 +5,8 @@ function RoadGroup({ onPointerDown }: { onPointerDown?: (event: ThreeEvent<Point
   // Create road markings
   const laneMarkings = useMemo(() => {
     const markings: { key: string; position: [number, number, number] }[] = [];
-    const roadLength = 60;
-    const numMarkings = 20;
+    const roadLength = 120;
+    const numMarkings = 40;
     
     for (let i = 0; i < numMarkings; i++) {
       markings.push({
@@ -20,7 +20,7 @@ function RoadGroup({ onPointerDown }: { onPointerDown?: (event: ThreeEvent<Point
   const sidewalks = useMemo(() => {
     const roadWidth = 14;
     const sidewalkWidth = 3;
-    const roadLength = 60;
+    const roadLength = 120;
     
     const sidewalkList: { position: [number, number, number]; width: number; length: number }[] = [
       { position: [(roadWidth / 2 + sidewalkWidth / 2), 0.05, 0], width: sidewalkWidth, length: roadLength },
@@ -33,13 +33,13 @@ function RoadGroup({ onPointerDown }: { onPointerDown?: (event: ThreeEvent<Point
     <group onPointerDown={onPointerDown}>
       {/* Main road - 4 lanes */}
       <mesh receiveShadow position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <boxGeometry args={[14, 60, 0.3]} />
+        <boxGeometry args={[14, 120, 0.3]} />
         <meshStandardMaterial color="#2C3E50" />
       </mesh>
 
       {/* Center line (yellow) */}
       <mesh position={[0, 0.165, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[0.2, 60]} />
+        <planeGeometry args={[0.2, 120]} />
         <meshStandardMaterial color="#F1C40F" />
       </mesh>
 
@@ -59,11 +59,11 @@ function RoadGroup({ onPointerDown }: { onPointerDown?: (event: ThreeEvent<Point
 
       {/* Road edges (white solid) */}
       <mesh position={[7, 0.165, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[0.2, 60]} />
+        <planeGeometry args={[0.2, 120]} />
         <meshStandardMaterial color="#FFFFFF" />
       </mesh>
       <mesh position={[-7, 0.165, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[0.2, 60]} />
+        <planeGeometry args={[0.2, 120]} />
         <meshStandardMaterial color="#FFFFFF" />
       </mesh>
 
@@ -88,7 +88,7 @@ export function RoadNetwork({ onPointerDown }: { onPointerDown?: (event: ThreeEv
     <group onPointerDown={onPointerDown}>
       {/* Ground plane */}
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
-        <planeGeometry args={[120, 120]} />
+        <planeGeometry args={[200, 200]} />
         <meshStandardMaterial color="#9BC53D" />
       </mesh>
 

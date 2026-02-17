@@ -57,10 +57,10 @@ export function SceneCanvas() {
         intensity={1.2}
         castShadow
         shadow-mapSize={[2048, 2048]}
-        shadow-camera-left={-60}
-        shadow-camera-right={60}
-        shadow-camera-top={60}
-        shadow-camera-bottom={-60}
+        shadow-camera-left={-100}
+        shadow-camera-right={100}
+        shadow-camera-top={100}
+        shadow-camera-bottom={-100}
       />
       <hemisphereLight args={['#87CEEB', '#9BC53D', 0.3]} />
       

@@ -76,7 +76,7 @@ export function TrafficVehicles() {
   };
 
   useFrame(() => {
-    const roadLength = 60;
+    const roadLength = 120;
     vehicleRefs.current.forEach((ref, i) => {
       if (ref && vehicles[i]) {
         const vehicle = vehicles[i];
