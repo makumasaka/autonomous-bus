@@ -1,15 +1,24 @@
 import { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { useGLTF } from '@react-three/drei';
 import type { Group } from 'three';
 import { useOperatorStore } from '../store/useOperatorStore';
 import * as THREE from 'three';
 
+const busModelUrl = new URL('../models/Bus01.glb', import.meta.url).href;
+
 export function HeroBus() {
   const busRef = useRef<Group>(null);
+  const { scene } = useGLTF(busModelUrl);
   const heroBus = useOperatorStore((state) => state.heroBus);
   const cameraMode = useOperatorStore((state) => state.cameraMode);
   const targetPosition = useRef(new THREE.Vector3());
   const targetRotation = useRef(0);
+  const clonedScene = useRef<THREE.Group | null>(null);
+
+  if (!clonedScene.current) {
+    clonedScene.current = scene.clone();
+  }
 
   // Update target position and rotation from store
   useEffect(() => {
@@ -26,15 +35,15 @@ export function HeroBus() {
     if (busRef.current) {
       // Smooth position interpolation
       busRef.current.position.lerp(targetPosition.current, 0.1);
-      
+
       // Smooth rotation interpolation
       const currentRotation = busRef.current.rotation.y;
       let targetRot = targetRotation.current;
-      
+
       // Handle rotation wrapping
       while (targetRot - currentRotation > Math.PI) targetRot -= Math.PI * 2;
       while (targetRot - currentRotation < -Math.PI) targetRot += Math.PI * 2;
-      
+
       busRef.current.rotation.y += (targetRot - currentRotation) * 0.1;
     }
   });
@@ -49,59 +58,14 @@ export function HeroBus() {
       camera.position.x += (targetX - camera.position.x) * 0.05;
       camera.position.y += (targetY - camera.position.y) * 0.05;
       camera.position.z += (targetZ - camera.position.z) * 0.05;
-      
+
       camera.lookAt(busRef.current.position);
     }
   });
 
-  // Color based on autonomy state
-  const getBusColor = () => {
-    switch (heroBus.autonomyState) {
-      case 'stuck':
-        return '#E74C3C'; // Red
-      case 'awaiting_guidance':
-        return '#F39C12'; // Orange
-      case 'manual':
-        return '#3498DB'; // Blue
-      case 'autonomous':
-      default:
-        return '#27AE60'; // Green
-    }
-  };
-
   return (
     <group ref={busRef}>
-      {/* Main bus body */}
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[2.5, 2.5, 6]} />
-        <meshStandardMaterial color={getBusColor()} />
-      </mesh>
-
-      {/* Windows */}
-      <mesh position={[0, 0.8, 0]} castShadow>
-        <boxGeometry args={[2.3, 1.2, 5.8]} />
-        <meshStandardMaterial color="#34495E" opacity={0.6} transparent />
-      </mesh>
-
-      {/* Front bumper */}
-      <mesh position={[0, -0.5, 3.2]} castShadow>
-        <boxGeometry args={[2.5, 0.5, 0.3]} />
-        <meshStandardMaterial color="#2C3E50" />
-      </mesh>
-
-      {/* Wheels */}
-      {[
-        [-0.9, -1, 2],
-        [0.9, -1, 2],
-        [-0.9, -1, -2],
-        [0.9, -1, -2],
-      ].map((pos, i) => (
-        <mesh key={`wheel-${i}`} position={pos as [number, number, number]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-          <cylinderGeometry args={[0.4, 0.4, 0.3, 16]} />
-          <meshStandardMaterial color="#2C3E50" />
-        </mesh>
-      ))}
-
+      <primitive object={clonedScene.current} castShadow receiveShadow />
       {/* Status indicator light on top */}
       <mesh position={[0, 1.5, 0]}>
         <sphereGeometry args={[0.2, 16, 16]} />
