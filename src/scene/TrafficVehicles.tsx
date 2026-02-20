@@ -1,7 +1,29 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { useGLTF } from '@react-three/drei';
 import type { Group } from 'three';
 import { useOperatorStore } from '../store/useOperatorStore';
+import * as THREE from 'three';
+
+const TRAFFIC_MODEL_URLS = [
+  new URL('../models/Car01.glb', import.meta.url).href,
+  new URL('../models/Car02.glb', import.meta.url).href,
+  new URL('../models/Car03.glb', import.meta.url).href,
+  new URL('../models/Car04.glb', import.meta.url).href,
+  new URL('../models/Truck01.glb', import.meta.url).href,
+  new URL('../models/Truck02.glb', import.meta.url).href,
+  new URL('../models/Truck03.glb', import.meta.url).href,
+  new URL('../models/Truck04.glb', import.meta.url).href,
+];
+
+function VehicleModel({ url }: { url: string }) {
+  const { scene } = useGLTF(url);
+  const clonedScene = useRef<THREE.Object3D | null>(null);
+  if (!clonedScene.current) {
+    clonedScene.current = scene.clone();
+  }
+  return <primitive object={clonedScene.current} castShadow receiveShadow />;
+}
 
 interface Vehicle {
   id: number;
@@ -125,15 +147,7 @@ export function TrafficVehicles() {
           position={[vehicle.lane, 0.6, vehicle.startZ]}
           rotation={[0, vehicle.direction === 1 ? 0 : Math.PI, 0]} // Rotate 180° if going backward
         >
-          <mesh castShadow>
-            <boxGeometry args={[1.6, 1.2, 3.2]} />
-            <meshStandardMaterial color={vehicle.color} />
-          </mesh>
-          {/* Windows */}
-          <mesh position={[0, 0.3, 0]}>
-            <boxGeometry args={[1.5, 0.6, 3]} />
-            <meshStandardMaterial color="#34495E" opacity={0.5} transparent />
-          </mesh>
+          <VehicleModel url={TRAFFIC_MODEL_URLS[i % TRAFFIC_MODEL_URLS.length]} />
         </group>
       ))}
     </group>
