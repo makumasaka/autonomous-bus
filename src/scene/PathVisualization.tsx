@@ -36,13 +36,16 @@ function ControlPoint({ point, onDrag }: { point: PathPoint; onDrag?: (id: strin
     >
       <sphereGeometry args={[0.3, 16, 16]} />
       <meshStandardMaterial
-        color="#3498DB"
-        emissive="#3498DB"
-        emissiveIntensity={0.3}
+        color="#00D4FF"
+        emissive="#00D4FF"
+        emissiveIntensity={0.4}
       />
     </mesh>
   );
 }
+
+// Elevate path line above road surface (road top ~0.16) so it isn't hidden underneath
+const PATH_LINE_ELEVATION = 0.22;
 
 export function PathVisualization() {
   const currentPath = useOperatorStore((state) => state.currentPath);
@@ -50,24 +53,24 @@ export function PathVisualization() {
 
   const linePoints = useMemo(() => {
     if (!currentPath || currentPath.points.length < 2) return null;
-    
-    return currentPath.points.map((p) => [p.position.x, p.position.y, p.position.z] as [number, number, number]);
+    return currentPath.points.map(
+      (p) => [p.position.x, PATH_LINE_ELEVATION, p.position.z] as [number, number, number]
+    );
   }, [currentPath]);
 
   const pathColor = useMemo(() => {
-    if (!currentPath) return '#3498DB';
-    
+    if (!currentPath) return '#00D4FF';
     switch (currentPath.status) {
       case 'draft':
-        return '#3498DB'; // Blue
+        return '#00D4FF'; // Bright cyan – high contrast on dark road
       case 'submitted':
-        return '#F39C12'; // Orange
+        return '#FFB020'; // Bright orange
       case 'accepted':
-        return '#27AE60'; // Green
+        return '#00E676'; // Bright green
       case 'rejected':
-        return '#E74C3C'; // Red
+        return '#FF5252'; // Bright red
       default:
-        return '#3498DB';
+        return '#00D4FF';
     }
   }, [currentPath?.status]);
 
@@ -88,11 +91,11 @@ export function PathVisualization() {
         <Line
           points={linePoints}
           color={pathColor}
-          lineWidth={3}
+          lineWidth={8}
           dashed={currentPath.status === 'draft'}
-          dashScale={2}
-          dashSize={0.5}
-          gapSize={0.3}
+          dashScale={3}
+          dashSize={1}
+          gapSize={0.4}
         />
       )}
 
