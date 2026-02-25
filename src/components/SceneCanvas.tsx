@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
+import { MOUSE } from 'three';
 import { CityScene } from '../scene/CityScene';
 import { useOperatorStore } from '../store/useOperatorStore';
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib';
@@ -49,6 +50,7 @@ export function SceneCanvas() {
         maxDistance={100}
         maxPolarAngle={Math.PI / 2}
         enabled={cameraMode !== 'follow'}
+        mouseButtons={{ LEFT: MOUSE.PAN, MIDDLE: MOUSE.ROTATE, RIGHT: MOUSE.PAN }}
       />
       
       <ambientLight intensity={0.5} />
