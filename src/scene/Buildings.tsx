@@ -1,6 +1,24 @@
 import React, { useMemo } from 'react';
 import type { ThreeEvent } from '@react-three/fiber';
 
+// Match RoadNetwork: road + sidewalks extent (X and Z)
+const ROAD_HALF_WIDTH = 7 + 3; // road half + sidewalk
+const ROAD_HALF_LENGTH = 500;
+
+function buildingIntersectsRoad(
+  x: number,
+  z: number,
+  halfWidth: number,
+  halfDepth: number
+): boolean {
+  return !(
+    x - halfWidth > ROAD_HALF_WIDTH ||
+    x + halfWidth < -ROAD_HALF_WIDTH ||
+    z - halfDepth > ROAD_HALF_LENGTH ||
+    z + halfDepth < -ROAD_HALF_LENGTH
+  );
+}
+
 export function Buildings({ onPointerDown }: { onPointerDown?: (event: ThreeEvent<PointerEvent>) => void }) {
   const buildings = useMemo(() => {
     const buildingList: {
@@ -13,20 +31,30 @@ export function Buildings({ onPointerDown }: { onPointerDown?: (event: ThreeEven
     }[] = [];
     const numBuildings = 16;
     const radius = 25;
+    const maxAttempts = 200;
+    let placed = 0;
+    let attempts = 0;
 
-    for (let i = 0; i < numBuildings; i++) {
-      const angle = (i / numBuildings) * Math.PI * 2;
-      const x = Math.cos(angle) * (radius + Math.random() * 10);
-      const z = Math.sin(angle) * (radius + Math.random() * 10);
-      
+    while (placed < numBuildings && attempts < maxAttempts) {
+      attempts++;
+      const angle = (placed / numBuildings) * Math.PI * 2 + Math.random() * 0.5;
+      const r = radius + Math.random() * 15;
+      const x = Math.cos(angle) * r;
+      const z = Math.sin(angle) * r;
+      const width = 4 + Math.random() * 3;
+      const depth = 4 + Math.random() * 3;
+
+      if (buildingIntersectsRoad(x, z, width / 2, depth / 2)) continue;
+
       buildingList.push({
-        id: i,
+        id: placed,
         position: [x, 0, z] as [number, number, number],
-        width: 4 + Math.random() * 3,
+        width,
         height: 8 + Math.random() * 15,
-        depth: 4 + Math.random() * 3,
-        color: i % 3 === 0 ? '#5B9BD5' : i % 3 === 1 ? '#70AD47' : '#ED7D31',
+        depth,
+        color: placed % 3 === 0 ? '#5B9BD5' : placed % 3 === 1 ? '#70AD47' : '#ED7D31',
       });
+      placed++;
     }
 
     return buildingList;

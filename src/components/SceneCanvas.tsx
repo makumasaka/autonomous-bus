@@ -35,6 +35,7 @@ export function SceneCanvas() {
   return (
     <Canvas shadows className="w-full h-full">
       <color attach="background" args={['#87CEEB']} />
+      <fog attach="fog" args={['#87CEEB', 80, 450]} />
       
       <PerspectiveCamera
         makeDefault
@@ -47,7 +48,7 @@ export function SceneCanvas() {
         enableDamping
         dampingFactor={0.05}
         minDistance={5}
-        maxDistance={100}
+        maxDistance={300}
         maxPolarAngle={Math.PI / 2}
         enabled={cameraMode !== 'follow'}
         mouseButtons={{ LEFT: MOUSE.PAN, MIDDLE: MOUSE.ROTATE, RIGHT: MOUSE.PAN }}
