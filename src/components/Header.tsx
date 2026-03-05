@@ -10,7 +10,7 @@ export function Header() {
   };
 
   return (
-    <header className="bg-gradient-to-r from-[#1a1a1a] to-[#2a2a2a] border-b border-gray-800 px-6 py-4">
+    <header className="bg-gradient-to-r from-indigo-600 to-indigo-700 border-b border-gray-800 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-8">
           <div>
