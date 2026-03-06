@@ -1,0 +1,38 @@
+{
+  "version": 8,
+  "name": "Robobus Dark",
+  "glyphs": "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+  "sources": {
+    "robobus-basemap": {
+      "type": "raster",
+      "tiles": [
+        "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+        "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+        "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+        "https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
+      ],
+      "tileSize": 256,
+      "attribution": "© OpenStreetMap contributors © CARTO"
+    }
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": { "background-color": "#070B14" }
+    },
+    {
+      "id": "basemap",
+      "type": "raster",
+      "source": "robobus-basemap",
+      "paint": {
+        "raster-opacity": 0.92,
+        "raster-saturation": -0.2,
+        "raster-contrast": 0.12,
+        "raster-brightness-min": 0.0,
+        "raster-brightness-max": 0.14
+      }
+    }
+  ]
+}
+
