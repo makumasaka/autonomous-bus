@@ -2,7 +2,7 @@ import * as React from "react";
 import Map, { Layer, Marker, NavigationControl, Source, type MapRef } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import maplibregl from "maplibre-gl";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Depot, Route, StuckEvent, Vehicle } from "@/types/ops";
 import { SF_CENTER } from "@/data/mockOps";
 import { cn } from "@/components/ui/utils";
@@ -10,6 +10,24 @@ import robobusDarkStyle from "@/mapstyles/robobus-dark.json";
 import { mockCityOverlays } from "@/data/mockOverlays";
 
 const DARK_STYLE = robobusDarkStyle as any;
+
+/** Full Fleet View: 2D operational zoom over SF (pan and zoom enabled) */
+const FULL_VIEW = {
+  longitude: SF_CENTER.lng,
+  latitude: SF_CENTER.lat,
+  zoom: 12.6,
+  pitch: 0,
+  bearing: 0,
+} as const;
+
+/** Minimap: zoomed out so all of SF is visible in the small card (380×232px) */
+const MINIMAP_VIEW = {
+  longitude: SF_CENTER.lng,
+  latitude: SF_CENTER.lat,
+  zoom: 10.0,
+  pitch: 0,
+  bearing: 0,
+} as const;
 
 function severityColor(sev: StuckEvent["severity"]) {
   switch (sev) {
@@ -62,9 +80,41 @@ export function SFMap({
 }) {
   const mapRef = useRef<MapRef | null>(null);
 
+  // Minimap: controlled view so we can keep view fixed. Full map: uncontrolled so pan/zoom are not overwritten by re-renders.
+  const [viewState, setViewState] = useState(() =>
+    compact ? { ...MINIMAP_VIEW } : { ...FULL_VIEW }
+  );
+
   useEffect(() => {
-    // Ensure MapLibre resizes correctly when container animates.
+    if (compact) setViewState((prev) => ({ ...prev, ...MINIMAP_VIEW }));
+  }, [compact]);
+
+  // Force minimap camera when switching to compact (reused map may not apply controlled viewState).
+  useEffect(() => {
+    if (!compact) return;
+    const m = mapRef.current?.getMap?.();
+    if (!m) return;
+    const t = window.setTimeout(() => {
+      m.jumpTo({
+        center: [MINIMAP_VIEW.longitude, MINIMAP_VIEW.latitude],
+        zoom: MINIMAP_VIEW.zoom,
+        pitch: MINIMAP_VIEW.pitch,
+        bearing: MINIMAP_VIEW.bearing,
+      });
+    }, 0);
+    return () => window.clearTimeout(t);
+  }, [compact]);
+
+  const onMove = useCallback((ev: { viewState: typeof viewState }) => {
+    setViewState(ev.viewState);
   }, []);
+
+  useEffect(() => {
+    const m = mapRef.current?.getMap?.();
+    if (!m) return;
+    const t = window.setTimeout(() => m.resize(), 0);
+    return () => window.clearTimeout(t);
+  }, [compact]);
 
   const routesFc = useMemo<GeoJSON.FeatureCollection>(() => {
     return {
@@ -93,6 +143,22 @@ export function SFMap({
     };
   }, [events, selectedEventId]);
 
+  const vehiclesFc = useMemo<GeoJSON.FeatureCollection>(() => {
+    return {
+      type: "FeatureCollection",
+      features: vehicles.map((v) => ({
+        type: "Feature" as const,
+        properties: {
+          id: v.id,
+          fleetId: v.fleetId,
+          status: v.status,
+          color: vehicleColor(v.status),
+        },
+        geometry: { type: "Point", coordinates: [v.location.lng, v.location.lat] },
+      })),
+    };
+  }, [vehicles]);
+
   const overlaysFc = useMemo<GeoJSON.FeatureCollection>(() => {
     return {
       type: "FeatureCollection",
@@ -109,36 +175,25 @@ export function SFMap({
     };
   }, []);
 
-  // Make sure the map resizes when container animates.
-  useEffect(() => {
-    const m = mapRef.current?.getMap?.();
-    if (!m) return;
-    const t = window.setTimeout(() => m.resize(), 0);
-    return () => window.clearTimeout(t);
-  });
-
   return (
     <div className={cn("size-full", compact ? "rounded-2xl overflow-hidden" : "")}>
       <Map
+        key={compact ? "minimap" : "full"}
         ref={mapRef}
         mapLib={maplibregl}
-        reuseMaps
+        reuseMaps={compact}
         style={{ width: "100%", height: "100%" }}
-        initialViewState={{
-          longitude: SF_CENTER.lng,
-          latitude: SF_CENTER.lat,
-          zoom: compact ? 12.3 : 12.6,
-          pitch: compact ? 0 : 45,
-          bearing: -18,
-        }}
-        maxPitch={75}
+        {...(compact
+          ? { ...viewState, onMove }
+          : { initialViewState: FULL_VIEW })}
+        maxPitch={compact ? 75 : 0}
         minZoom={10}
         maxZoom={18}
         dragPan={interactive}
         scrollZoom={interactive}
         doubleClickZoom={interactive}
-        dragRotate={interactive && !compact}
-        touchZoomRotate={interactive && !compact}
+        dragRotate={false}
+        touchZoomRotate={interactive}
         attributionControl={false}
         mapStyle={DARK_STYLE}
       >
@@ -198,6 +253,20 @@ export function SFMap({
           />
         </Source>
 
+        {/* Vehicles (circle layer for performance with hundreds of buses) */}
+        <Source id="vehicles" type="geojson" data={vehiclesFc as any}>
+          <Layer
+            id="vehicle-dots"
+            type="circle"
+            paint={{
+              "circle-radius": compact ? 3 : 4,
+              "circle-color": ["get", "color"],
+              "circle-stroke-width": 1,
+              "circle-stroke-color": "rgba(255,255,255,0.5)",
+            }}
+          />
+        </Source>
+
         {/* Incidents as a subtle glow + core */}
         <Source id="incidents" type="geojson" data={incidentsFc as any}>
           <Layer
@@ -221,27 +290,6 @@ export function SFMap({
             }}
           />
         </Source>
-
-        {/* Vehicles */}
-        {vehicles.map((v) => (
-          <Marker
-            key={v.id}
-            longitude={v.location.lng}
-            latitude={v.location.lat}
-            anchor="center"
-          >
-            <div className="group relative grid size-7 place-items-center" title={`${v.fleetId} • ${v.status}`}>
-              <div className="absolute size-7 rounded-full bg-black/20 ring-1 ring-white/10" />
-              <div
-                className="size-3.5 rounded-full ring-1 ring-white/40 shadow-[0_0_0_2px_rgba(0,0,0,0.35)]"
-                style={{ backgroundColor: vehicleColor(v.status) }}
-              />
-              <div className="pointer-events-none absolute -bottom-7 hidden whitespace-nowrap rounded-md bg-black/60 px-2 py-1 text-[11px] text-white ring-1 ring-white/10 backdrop-blur-sm group-hover:block">
-                {v.fleetId}
-              </div>
-            </div>
-          </Marker>
-        ))}
 
         {/* Depots */}
         {!compact
